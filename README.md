@@ -48,6 +48,44 @@ When you define a user here, Ataraxia will:
 2. Match the `environment` string to registered environment flakes.
 3. Automatically enable and import the Home Manager modules.
 
+### The Environment Protocol
+To add a completely new dotfile/environment flake into the system:
+
+1. **Add the flake input** in `flake.nix`:
+   ```nix
+   inputs.alice-env.url = "github:alice/dotfiles";
+   ```
+2. **Register it** in the `validEnvInputs` array inside `users/default.nix`:
+   ```nix
+   validEnvInputs = [
+     "tsukuyomi-env"
+     "alice-env"
+   ];
+   ```
+3. **Assign it** to a user in `manifest.toml`:
+   ```toml
+   environment = "alice"
+   ```
+
+#### Flake Requirements
+For the system to successfully consume your environment flake, it **must** export a Home Manager module at `homeManagerModules.default`. 
+
+```nix
+# Inside the external environment's flake.nix
+outputs = { self, nixpkgs, ... }: {
+  homeManagerModules.default = { config, lib, pkgs, nixataraxia, userData, ... }: {
+    # Your Home Manager configuration here
+  };
+};
+```
+
+Your module will automatically receive the following `extraSpecialArgs` from Ataraxia:
+- `nixataraxia`: The dependency isolation library (e.g., for `nixataraxia.wrapWithDeps`).
+- `userData`: The specific user's block from `manifest.toml` (contains their name, groups, desktop, etc.).
+- `inputs`: The core system's flake inputs.
+
+The system will automatically validate the binding and import the flake's Home Manager modules.
+
 ### Adding Isolated Packages
 To add a package with hermetically sealed dependencies, use the injected `nixataraxia` library within any user module:
 
