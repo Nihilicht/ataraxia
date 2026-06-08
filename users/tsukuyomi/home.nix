@@ -1,11 +1,15 @@
-{ config, pkgs, userData, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  userData,
+  ...
+}:
 
 {
-  # home.username and home.homeDirectory are now automatically handled by users/default.nix
+  imports = [
+    ./modules
+  ];
 
   home.stateVersion = "26.05";
-
-  home.packages = [
-    # pkgs.hello
-  ];
 }

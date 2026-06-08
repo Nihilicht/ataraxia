@@ -1,12 +1,45 @@
-{ lib, pkgs, hostName, ... }:
+{
+  lib,
+  pkgs,
+  hostName,
+  ...
+}:
 
 {
   networking.hostName = hostName;
 
-  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-    "steam-unwrapped"
-    "cloudflare-warp"
-  ];
+  nixpkgs.config.allowUnfreePredicate =
+    pkg:
+    builtins.elem (lib.getName pkg) [
+      "steam-unwrapped"
+      "cloudflare-warp"
+    ];
+
+  # Enforce root-only permissions globally, but give users control of their own folders
+  system.activationScripts.enforceAtaraxiaPerms = ''
+    if [ ! -d "/etc/ataraxia" ]; then
+      echo "CRITICAL ERROR: Ataraxia repository must be located at /etc/ataraxia!" >&2
+      exit 1
+    fi
+
+    # 1. Lock everything down to root by default
+    chown -R root:root /etc/ataraxia
+    chmod 644 /etc/ataraxia/manifest.toml
+
+    # 2. Give users ownership of their personal configuration folders
+    if [ -d "/etc/ataraxia/users" ]; then
+      for user_dir in /etc/ataraxia/users/*/; do
+        # Skip if the glob didn't match any directories
+        [ -d "$user_dir" ] || continue
+        
+        user_name=$(basename "$user_dir")
+        # Check if the user actually exists on the system
+        if id "$user_name" >/dev/null 2>&1; then
+          chown -R "$user_name:users" "$user_dir"
+        fi
+      done
+    fi
+  '';
 
   boot = {
     # Use the systemd-boot EFI boot loader.
@@ -14,10 +47,10 @@
       systemd-boot.enable = true;
       efi.canTouchEfiVariables = true;
     };
-    
+
     # Always use the latest kernel for better hardware support (especially on AMD).
     kernelPackages = pkgs.linuxPackages_latest;
-    
+
     # Enable NTFS support for the shared Windows/Data drive.
     supportedFilesystems = [ "ntfs3" ];
   };
@@ -32,25 +65,34 @@
   networking = {
     # Configure network connections interactively (nmcli/nmtui).
     networkmanager.enable = true;
-    
+
     # Firewall settings to allow local network communication.
     firewall = {
       enable = true;
-      allowedTCPPorts = [ 22 ];   # SSH access from other devices.
+      allowedTCPPorts = [ 22 ]; # SSH access from other devices.
       # UDP 5353 is now handled automatically by services.avahi.openFirewall
     };
 
-    nameservers = [ "1.1.1.1" "1.0.0.1" ];
+    nameservers = [
+      "1.1.1.1"
+      "1.0.0.1"
+    ];
   };
 
   nix = {
     settings = {
       # Enable Flakes and the new 'nix' command line tool.
-      experimental-features = [ "nix-command" "flakes" ];
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
       # Allow the user to perform administrative Nix tasks without sudo.
-      trusted-users = [ "root" "@wheel" ];
+      trusted-users = [
+        "root"
+        "@wheel"
+      ];
       # Deduplicate files in the store automatically during builds
-      auto-optimise-store = true; 
+      auto-optimise-store = true;
 
       substituters = [ "https://ezkea.cachix.org" ];
       trusted-public-keys = [ "ezkea.cachix.org-1:ioBmUbJTZIKsHmWWXPe1FSFbeVe+afhfgqgTSNd34eI=" ];
@@ -67,7 +109,7 @@
   services = {
     # Keep system time accurately synced.
     ntp.enable = true;
-    
+
     # Secure remote access configuration.
     openssh = {
       enable = true;
@@ -77,14 +119,14 @@
         KbdInteractiveAuthentication = false;
       };
     };
-    
+
     # Enable mDNS (Avahi) so the machine can be reached via hostname.local
     # This allows you to SSH into the machine without knowing its IP address.
     avahi = {
       enable = true;
-      nssmdns4 = true;    # Allows the desktop to resolve other .local names
+      nssmdns4 = true; # Allows the desktop to resolve other .local names
       openFirewall = true; # Automatically opens the correct ports
-      
+
       ipv4 = true;
       ipv6 = false; # Stops the constant IP flapping collisions
 
@@ -95,7 +137,7 @@
         userServices = true; # Broadcast even more service metadata
       };
     };
-    
+
     # Custom login screen using Cage (Kiosk compositor) and Quickshell.
     greetd = {
       enable = true;
@@ -106,7 +148,7 @@
         };
       };
     };
-    
+
     # Explicitly disable X11 as we are using a Wayland-native setup (Hyprland).
     xserver.enable = false;
 
@@ -116,11 +158,14 @@
   };
 
   # Link custom greeter assets and the manifest to the expected greetd path.
-  environment.etc."greetd".source = pkgs.runCommand "greetd-assets" { 
-    manifestJson = builtins.toJSON (builtins.fromTOML (builtins.readFile ../../manifest.toml));
-  } ''
-    mkdir -p $out
-    cp -r ${../../greetd}/* $out/
-    echo "$manifestJson" > $out/manifest.json
-  '';
+  environment.etc."greetd".source =
+    pkgs.runCommand "greetd-assets"
+      {
+        manifestJson = builtins.toJSON (fromTOML (builtins.readFile ../manifest.toml));
+      }
+      ''
+        mkdir -p $out
+        cp -r ${../greetd}/* $out/
+        echo "$manifestJson" > $out/manifest.json
+      '';
 }

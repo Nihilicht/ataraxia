@@ -10,8 +10,8 @@ in
   # 2. Environment/Dotfile Overlays (From envs.nix)
   inherit (envs) tsukuyomi-env;
 
-  # 3. Local custom packages
-  additions = import ./additions.nix;
+  # 3. Local custom packages (including new external packages)
+  additions = import ./additions.nix { inherit inputs; };
 
   # 4. Modifications/Overrides
   modifications = import ./modifications.nix;

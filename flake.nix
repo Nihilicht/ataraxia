@@ -17,8 +17,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    fjordlauncher = {
+      url = "github:hero-persson/FjordLauncherUnlocked";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     tsukuyomi-env = {
       url = "github:Nihilicht/tsukuyomi-env";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
@@ -34,6 +40,9 @@
       # Pass all inputs to overlays
       overlays = import ./overlays { inherit inputs; };
 
+      # Global library
+      nixataraxia = import ./lib;
+
       # Helper to filter users for a specific host
       getEnabledUsers =
         hostCfg: builtins.filter (u: builtins.elem u.name (hostCfg.users or [ ])) manifest.users;
@@ -47,7 +56,7 @@
             specialArgs = {
               hostName = hostCfg.name;
               enabledUsers = getEnabledUsers hostCfg;
-              inherit inputs;
+              inherit inputs nixataraxia;
             };
             modules = [
               ./hosts/${hostCfg.name}/default.nix

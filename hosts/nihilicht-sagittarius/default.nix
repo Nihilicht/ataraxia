@@ -2,7 +2,7 @@
 
 {
   imports = [
-    ./hardware-configuration.nix      # Hardware scan results
+    ./hardware-configuration.nix # Hardware scan results
   ];
 
   # Location of the swap partition/file for hibernation/resume.
@@ -12,17 +12,17 @@
   fileSystems."/mnt/shared" = {
     device = "/dev/disk/by-uuid/66C27368BA402D04";
     fsType = "ntfs3";
-    options =[ 
-      "rw" 
+    options = [
+      "rw"
       "uid=1000"
       "gid=100"
       "dmask=022"
       "fmask=133"
-      "nofail"                     # Don't hang boot if the drive is missing
-      "force"                      # Ignore minor Windows metadata flags
-      "noauto"                     
-      "x-systemd.automount"        # Mount only when accessed
-      "x-systemd.idle-timeout=60"  # Unmount after 1 minute of inactivity
+      "nofail" # Don't hang boot if the drive is missing
+      "force" # Ignore minor Windows metadata flags
+      "noauto"
+      "x-systemd.automount" # Mount only when accessed
+      "x-systemd.idle-timeout=60" # Unmount after 1 minute of inactivity
     ];
   };
 

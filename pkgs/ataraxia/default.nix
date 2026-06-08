@@ -11,9 +11,9 @@ pkgs.rustPlatform.buildRustPackage {
     lockFile = ../../manager/Cargo.lock;
   };
 
-  # Since it's a local project, we might need to handle the cargo lock differently 
+  # Since it's a local project, we might need to handle the cargo lock differently
   # or provide a hash if it were remote. For local, lockFile works best.
-  
+
   meta = {
     description = "Nix configuration manager for Ataraxia";
     mainProgram = "ataraxia";
