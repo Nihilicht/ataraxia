@@ -27,4 +27,6 @@
     enable = true;
     nix-direnv.enable = true;
   };
+
+  xdg.configFile."helix".source = ../dotfiles/helix;
 }

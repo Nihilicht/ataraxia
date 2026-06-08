@@ -27,4 +27,9 @@
   programs.starship.enable = true;
   programs.atuin.enable = true;
   programs.zoxide.enable = true;
+
+  xdg.configFile = {
+    "fish/conf.d/bun.fish".source = ../dotfiles/fish/conf.d/bun.fish;
+    "fish/conf.d/shell.fish".source = ../dotfiles/fish/conf.d/shell.fish;
+  };
 }

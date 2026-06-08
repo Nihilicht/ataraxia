@@ -1,0 +1,36 @@
+theme = "catppuccin_mocha"
+
+[editor]
+cursorline = true
+end-of-line-diagnostics = "hint"
+bufferline = "multiple"
+
+[editor.cursor-shape]
+insert = "bar"
+normal = "block"
+select = "underline"
+
+[editor.whitespace.render]
+space = "all"
+tab = "all"
+newline = "all"
+
+[editor.whitespace.characters]
+tab = "→"
+tabpad = "★"
+newline = "↵"
+
+[editor.indent-guides]
+render = true
+character = "╎"
+
+[editor.smart-tab]
+supersede-menu = true
+
+[editor.inline-diagnostics]
+cursor-line = "error"
+
+[keys.normal]
+C-A-left = ":bp"
+C-A-right = ":bn"
+C-A-q = ":bc"
