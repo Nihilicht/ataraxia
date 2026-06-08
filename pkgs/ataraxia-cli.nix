@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 pkgs.rustPlatform.buildRustPackage {
-  pname = "ataraxia";
+  pname = "ataraxia-cli";
   version = "0.1.0";
 
   # This points to the manager directory at the root of your project

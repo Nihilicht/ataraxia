@@ -29,7 +29,7 @@
   environment = {
     # System-wide packages.
     systemPackages = with pkgs; [
-      ataraxia # Custom configuration manager
+      ataraxia-cli # Custom configuration manager
       zellij # Terminal multiplexer
       helix # Modal text editor
       wget # Network downloader
