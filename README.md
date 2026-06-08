@@ -5,7 +5,7 @@ Ataraxia is a highly modular, secure, and dynamically provisioned NixOS & Home M
 ## ✨ Capabilities
 
 ### 1. Dynamic Environment Binding
-Instead of hardcoding user configurations inside monolithic `home.nix` files, Ataraxia utilizes a declarative `manifest.toml` to dynamically map system users to specific environment flakes. The system automatically searches for explicitly registered environments (e.g., `tsukuyomi-env`) and binds them directly into the target user's Home Manager configuration. 
+Instead of hardcoding user configurations inside monolithic `home.nix` files, Ataraxia utilizes a declarative `manifest.toml` to dynamically map system users to specific environment flakes. The system automatically searches for explicitly registered environments (e.g., [`tsukuyomi-env`](https://github.com/Nihilicht/tsukuyomi-env)) and binds them directly into the target user's Home Manager configuration. 
 
 This provides fail-safe validation: if a requested environment is missing or unused, the Nix evaluator will warn you before the build finishes.
 

@@ -21,6 +21,9 @@
 
     # Networking/Tray
     netbird-ui
+
+    # Satisfy tsukuyomi-env assertion
+    uwsm
   ];
 
   # Programs that have their own HM module

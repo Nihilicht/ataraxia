@@ -59,6 +59,24 @@
         "type": "github"
       }
     },
+    "flake-utils": {
+      "inputs": {
+        "systems": "systems_3"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
     "helium": {
       "inputs": {
         "nixpkgs": [
@@ -72,6 +90,28 @@
         "owner": "schembriaiden",
         "repo": "helium-browser-nix-flake",
         "rev": "c6364929cb9a7fe155195a75bcb6fa2433af6f75",
+        "type": "github"
+      },
+      "original": {
+        "owner": "schembriaiden",
+        "repo": "helium-browser-nix-flake",
+        "type": "github"
+      }
+    },
+    "helium_2": {
+      "inputs": {
+        "nixpkgs": [
+          "tsukuyomi-env",
+          "nixpkgs"
+        ],
+        "utils": "utils_2"
+      },
+      "locked": {
+        "lastModified": 1780855759,
+        "narHash": "sha256-1x5KfTHXzsxyeixg0q7+WhBX6uKPHDHLdBDEUV4dR4I=",
+        "owner": "schembriaiden",
+        "repo": "helium-browser-nix-flake",
+        "rev": "59981da497f383c61e1d2d20b86743a6663355bf",
         "type": "github"
       },
       "original": {
@@ -132,6 +172,50 @@
         "type": "github"
       }
     },
+    "qml-language-server": {
+      "inputs": {
+        "flake-utils": "flake-utils",
+        "nixpkgs": [
+          "tsukuyomi-env",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1777612515,
+        "narHash": "sha256-WJjz7JM1/24M31ntIBSCygyGhZVgm4A3vHwMijYDJLs=",
+        "owner": "cushycush",
+        "repo": "qml-language-server",
+        "rev": "767f2d041aa89ae81b3da0f373fed9c1ac97b04d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "cushycush",
+        "repo": "qml-language-server",
+        "type": "github"
+      }
+    },
+    "quickshell": {
+      "inputs": {
+        "nixpkgs": [
+          "tsukuyomi-env",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1777871389,
+        "narHash": "sha256-gU+VGpwGJ2vvg0mtYqVvj5u+2LteuHlpokH6JSAtueY=",
+        "ref": "refs/tags/v0.3.0",
+        "rev": "59e9c47b0eb48a9e4bcf9631fa062ee939bd2e83",
+        "revCount": 815,
+        "type": "git",
+        "url": "https://git.outfoxxed.me/outfoxxed/quickshell"
+      },
+      "original": {
+        "ref": "refs/tags/v0.3.0",
+        "type": "git",
+        "url": "https://git.outfoxxed.me/outfoxxed/quickshell"
+      }
+    },
     "root": {
       "inputs": {
         "aagl": "aagl",
@@ -178,13 +262,51 @@
         "type": "github"
       }
     },
-    "tsukuyomi-env": {
+    "systems_2": {
       "locked": {
-        "lastModified": 1780851848,
-        "narHash": "sha256-AmSyRc6mMeZ++dK6PIKhY4SN00b9pXY5dTrDe53rAcY=",
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_3": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "tsukuyomi-env": {
+      "inputs": {
+        "helium": "helium_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "qml-language-server": "qml-language-server",
+        "quickshell": "quickshell"
+      },
+      "locked": {
+        "lastModified": 1780945139,
+        "narHash": "sha256-3cbitbiKVzhOMe0wshFGPHTMLSG3j5bLs/WQ/JDDwzU=",
         "owner": "Nihilicht",
         "repo": "tsukuyomi-env",
-        "rev": "5dc21c280fe80d56385239a5e2bd65f14a828e90",
+        "rev": "a17017f1ee2d398ce688f5ecca715f4f84f6db22",
         "type": "github"
       },
       "original": {
@@ -196,6 +318,24 @@
     "utils": {
       "inputs": {
         "systems": "systems"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "utils_2": {
+      "inputs": {
+        "systems": "systems_2"
       },
       "locked": {
         "lastModified": 1731533236,
