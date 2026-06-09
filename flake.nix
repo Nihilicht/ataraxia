@@ -25,6 +25,7 @@
     tsukuyomi-env = {
       url = "github:Nihilicht/tsukuyomi-env";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.helium.follows = "helium";
     };
   };
 

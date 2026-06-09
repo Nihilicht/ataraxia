@@ -26,8 +26,6 @@
       zellij # Terminal multiplexer
       helix # Modal text editor
       wget # Network downloader
-      quickshell # Used for the custom greeter
-      cage # Kiosk compositor for greeter
       wl-clipboard # Wayland clipboard utilities
       psmisc # Helpful utilities like fuser and killall
       smartmontools
