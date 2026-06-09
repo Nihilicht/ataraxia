@@ -172,28 +172,6 @@
         "type": "github"
       }
     },
-    "quickshell": {
-      "inputs": {
-        "nixpkgs": [
-          "tsukuyomi-env",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1777871389,
-        "narHash": "sha256-gU+VGpwGJ2vvg0mtYqVvj5u+2LteuHlpokH6JSAtueY=",
-        "ref": "refs/tags/v0.3.0",
-        "rev": "59e9c47b0eb48a9e4bcf9631fa062ee939bd2e83",
-        "revCount": 815,
-        "type": "git",
-        "url": "https://git.outfoxxed.me/outfoxxed/quickshell"
-      },
-      "original": {
-        "ref": "refs/tags/v0.3.0",
-        "type": "git",
-        "url": "https://git.outfoxxed.me/outfoxxed/quickshell"
-      }
-    },
     "root": {
       "inputs": {
         "aagl": "aagl",
@@ -263,15 +241,14 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "qml-language-server": "qml-language-server",
-        "quickshell": "quickshell"
+        "qml-language-server": "qml-language-server"
       },
       "locked": {
-        "lastModified": 1781001165,
-        "narHash": "sha256-TEK2y3QQ1hWZvXsMJRAeX+xJyHeJZVtwdiNfjbMVOW8=",
+        "lastModified": 1781028906,
+        "narHash": "sha256-LnfWZp9hm4tcgczotjjfm0dka7C958qPV6V7naj5z5Q=",
         "owner": "Nihilicht",
         "repo": "tsukuyomi-env",
-        "rev": "0817062ae54dff5be3d75bb63c65ca212ff3db7e",
+        "rev": "7250456a40863279e1935faf7cbbf34538588212",
         "type": "github"
       },
       "original": {
