@@ -1,14 +1,14 @@
 { pkgs, ... }:
 
-pkgs.rustPlatform.buildRustPackage {
+pkgs.rustPlatform.buildRustPackage rec {
   pname = "ataraxia-cli";
   version = "0.1.0";
 
   # This points to the manager directory at the root of your project
-  src = ../../manager;
+  src = ../manager;
 
   cargoLock = {
-    lockFile = ../../manager/Cargo.lock;
+    lockFile = src + "/Cargo.lock";
   };
 
   # Since it's a local project, we might need to handle the cargo lock differently
