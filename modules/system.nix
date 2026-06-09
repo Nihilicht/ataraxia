@@ -2,6 +2,7 @@
   lib,
   pkgs,
   hostName,
+  hostCfg,
   ...
 }:
 
@@ -57,7 +58,7 @@
 
   time = {
     # Set the local time zone.
-    timeZone = "Asia/Manila";
+    timeZone = hostCfg.timezone or "UTC";
     # Fix dual-boot time conflicts with Windows (which expects local time).
     #hardwareClockInLocalTime = true;
   };
@@ -73,7 +74,7 @@
       # UDP 5353 is now handled automatically by services.avahi.openFirewall
     };
 
-    nameservers = [
+    nameservers = hostCfg.nameservers or [
       "1.1.1.1"
       "1.0.0.1"
     ];
@@ -143,7 +144,7 @@
       enable = true;
       settings = {
         default_session = {
-          command = "${pkgs.cage}/bin/cage -s -- sh -c '${pkgs.quickshell}/bin/quickshell -c /etc/greetd/shell.qml > /tmp/quickshell.log 2>&1'";
+          command = "${pkgs.cage}/bin/cage -s -- sh -c '${pkgs.quickshell}/bin/quickshell -p /etc/greetd/shell.qml > /tmp/quickshell.log 2>&1'";
           user = "greeter";
         };
       };
@@ -158,14 +159,9 @@
   };
 
   # Link custom greeter assets and the manifest to the expected greetd path.
-  environment.etc."greetd".source =
-    pkgs.runCommand "greetd-assets"
-      {
-        manifestJson = builtins.toJSON (fromTOML (builtins.readFile ../manifest.toml));
-      }
-      ''
-        mkdir -p $out
-        cp -r ${../greetd}/* $out/
-        echo "$manifestJson" > $out/manifest.json
-      '';
+  environment.etc = {
+    "greetd/shell.qml".source = ../greetd/shell.qml;
+    "greetd/assets".source = ../greetd/assets;
+    "greetd/manifest.json".text = builtins.toJSON (fromTOML (builtins.readFile ../manifest.toml));
+  };
 }

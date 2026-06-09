@@ -8,6 +8,7 @@
     {
       package,
       deps ? [ ],
+      extraWrapperArgs ? [ ],
     }:
     let
       binPath = lib.makeBinPath deps;
@@ -15,12 +16,15 @@
     pkgs.symlinkJoin {
       name = "${package.name}-wrapped";
       paths = [ package ];
-      buildInputs = [ pkgs.makeWrapper ];
+      nativeBuildInputs = [ pkgs.makeWrapper ];
       postBuild = ''
         if [ -d $out/bin ]; then
           for bin in $out/bin/*; do
-            if [ -x "$bin" ]; then
-              wrapProgram "$bin" --prefix PATH : "${binPath}"
+            # Skip if it's not a file or not executable
+            if [ -f "$bin" ] && [ -x "$bin" ]; then
+              wrapProgram "$bin" \
+                --prefix PATH : "${binPath}" \
+                ${lib.escapeShellArgs extraWrapperArgs}
             fi
           done
         fi

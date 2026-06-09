@@ -2,11 +2,13 @@
 name = "nihilicht-sagittarius"
 arch = "x86_64-linux"
 users = ["tsukuyomi"]
+timezone = "Asia/Manila"
+nameservers = ["1.1.1.1", "1.0.0.1"]
 
 [[users]]
 name = "tsukuyomi"
 home = true
 groups = ["wheel"]
-desktop = "hyprland"
+desktop = "hyprland.desktop"
 environment = "tsukuyomi"
 programs = ["honkers-railway-launcher"]

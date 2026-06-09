@@ -7,7 +7,7 @@
 
 let
   # Check if any user on this host wants Hyprland
-  hasHyprland = builtins.any (u: (u.desktop or "") == "hyprland") enabledUsers;
+  hasHyprland = builtins.any (u: (u.desktop or "") == "hyprland" || (u.desktop or "") == "hyprland.desktop") enabledUsers;
 in
 {
   programs.hyprland = {

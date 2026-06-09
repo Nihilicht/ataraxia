@@ -4,6 +4,7 @@
   enabledUsers,
   nixataraxia,
   inputs,
+  environments,
   ...
 }:
 
@@ -34,27 +35,6 @@
   # Home Manager integration
   home-manager =
     let
-      # Explicitly registered environment flake inputs
-      validEnvInputs = [
-        "tsukuyomi-env"
-        # Add other environment flake input names here
-      ];
-
-      environments = builtins.listToAttrs (
-        builtins.concatMap (
-          name:
-          if builtins.elem name validEnvInputs && builtins.hasAttr "homeManagerModules" inputs.${name} then
-            [
-              {
-                name = pkgs.lib.strings.removeSuffix "-env" name;
-                value = inputs.${name}.homeManagerModules.default;
-              }
-            ]
-          else
-            [ ]
-        ) (builtins.attrNames inputs)
-      );
-
       # Logic to warn about unused environments
       usedEnvs = map (u: u.environment or "") enabledUsers;
       unusedEnvs = builtins.filter (e: !(builtins.elem e usedEnvs)) (builtins.attrNames environments);
@@ -98,7 +78,6 @@
                 imports = [ ./${user.name}/home.nix ] ++ envModule;
                 home.username = user.name;
                 home.homeDirectory = "/home/${user.name}";
-                programs.home-manager.enable = true;
                 _module.args.userData = user;
                 env.enable = isValidEnv;
               };

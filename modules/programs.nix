@@ -7,13 +7,6 @@
     git.enable = true;
     fish.enable = true;
 
-    # Main window manager.
-    hyprland = {
-      enable = true;
-      xwayland.enable = false; # Pure Wayland setup for performance and security.
-      withUWSM = true; # Universal Wayland Session Manager for better session handling.
-    };
-
     # Enable dynamic linker stub for unpatched binaries (like cargo outputs)
     nix-ld = {
       enable = true;
@@ -33,7 +26,6 @@
       zellij # Terminal multiplexer
       helix # Modal text editor
       wget # Network downloader
-      home-manager # User configuration management
       quickshell # Used for the custom greeter
       cage # Kiosk compositor for greeter
       wl-clipboard # Wayland clipboard utilities

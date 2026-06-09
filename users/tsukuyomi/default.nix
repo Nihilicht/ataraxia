@@ -8,7 +8,7 @@
 {
   # Accessing name dynamically from manifest data
   users.users.${userData.name} = {
-    # shell = pkgs.zsh;
+    shell = pkgs.fish;
   };
 
   # Dynamically enable programs listed in the manifest
