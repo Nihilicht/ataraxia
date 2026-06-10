@@ -13,5 +13,6 @@
     vlc # Media player
     darktable # Photography workflow
     kdePackages.dolphin # File manager
+    antigravity-fhs
   ];
 }

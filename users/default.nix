@@ -73,11 +73,12 @@
           warnInvalid {
             name = user.name;
             value =
-              { ... }:
+              { config, ... }:
               {
                 imports = [ ./${user.name}/home.nix ] ++ envModule;
                 home.username = user.name;
                 home.homeDirectory = "/home/${user.name}";
+                home.file.".ataraxia".source = config.lib.file.mkOutOfStoreSymlink "/etc/ataraxia/users/${user.name}";
                 _module.args.userData = user;
                 env.enable = isValidEnv;
               };

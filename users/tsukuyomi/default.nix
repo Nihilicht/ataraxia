@@ -1,6 +1,7 @@
 {
   config,
   pkgs,
+  lib,
   userData,
   ...
 }:
@@ -10,6 +11,10 @@
   users.users.${userData.name} = {
     shell = pkgs.fish;
   };
+
+  ataraxia.unfreePackages = [
+    "antigravity"
+  ];
 
   # Dynamically enable programs listed in the manifest
   programs = builtins.listToAttrs (

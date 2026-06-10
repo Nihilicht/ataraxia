@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   hostName,
@@ -7,16 +8,26 @@
 }:
 
 {
-  networking.hostName = hostName;
+  options.ataraxia.unfreePackages = lib.mkOption {
+    type = lib.types.listOf lib.types.str;
+    default = [ ];
+    description = "List of unfree packages to allow system-wide.";
+  };
 
-  nixpkgs.config.allowUnfreePredicate =
-    pkg:
-    builtins.elem (lib.getName pkg) [
-      "steam-unwrapped"
-      "cloudflare-warp"
-    ];
+  config = {
+    networking.hostName = hostName;
 
-  # Enforce root-only permissions globally, but give users control of their own folders
+    nixpkgs.config.allowUnfreePredicate =
+      pkg:
+      builtins.elem (lib.getName pkg) (
+        [
+          "steam-unwrapped"
+          "cloudflare-warp"
+        ]
+        ++ config.ataraxia.unfreePackages
+      );
+
+    # Enforce root-only permissions globally, but give users control of their own folders
   system.activationScripts.enforceAtaraxiaPerms = ''
     if [ ! -d "/etc/ataraxia" ]; then
       echo "CRITICAL ERROR: Ataraxia repository must be located at /etc/ataraxia!" >&2
@@ -164,4 +175,5 @@
     "greetd/assets".source = ../greetd/assets;
     "greetd/manifest.json".text = builtins.toJSON (fromTOML (builtins.readFile ../manifest.toml));
   };
+};
 }
