@@ -12,10 +12,6 @@
     shell = pkgs.fish;
   };
 
-  ataraxia.unfreePackages = [
-    "antigravity"
-  ];
-
   # Dynamically enable programs listed in the manifest
   programs = builtins.listToAttrs (
     map (prog: {
