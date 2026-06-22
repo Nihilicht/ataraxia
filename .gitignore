@@ -1,0 +1,16 @@
+# Nix build artifacts
+result
+result-*
+
+# Nix Flake lock file (optional, but often ignored in early prototyping)
+# flake.lock 
+
+# Virtual Machine disk images
+*.qcow2
+
+# Temporary files
+.DS_Store
+*.swp
+
+# Testing application
+# application/
