@@ -78,13 +78,17 @@ pub enum Commands {
 pub enum HostCommands {
     /// Add a new host entry
     Add {
+        /// Name of the host to add
         name: String,
         /// System architecture
         #[arg(long, default_value = "x86_64-linux")]
         arch: Architecture,
     },
     /// Remove a host entry
-    Sub { name: String },
+    Sub {
+        /// Name of the host to remove
+        name: String,
+    },
     /// List all hosts in manifest
     List,
     /// Manage user assignments for a specific host
@@ -116,10 +120,14 @@ pub enum Architecture {
 pub enum UserCommands {
     /// Create a global user definition
     Add {
+        /// Name of the user to create
         name: String,
     },
     /// Remove a global user definition
-    Sub { name: String },
+    Sub {
+        /// Name of the user to remove
+        name: String,
+    },
     /// List all users in manifest
     List,
 }

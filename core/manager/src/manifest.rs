@@ -658,6 +658,11 @@ mod tests {
 
     #[test]
     fn test_check_host_and_user() {
+        if std::env::var("USER").is_err() {
+            unsafe {
+                std::env::set_var("USER", "dummy-user");
+            }
+        }
         let current_host = get_current_hostname().unwrap_or_default();
         let current_user = std::env::var("USER").unwrap_or_default();
         let toml_content = format!(

@@ -53,9 +53,6 @@
                   ++ nixpkgs.lib.optional (builtins.pathExists (root + "/hosts/${hostCfg.name}/default.nix")) (
                     root + "/hosts/${hostCfg.name}/default.nix"
                   )
-                  ++ nixpkgs.lib.optional (builtins.pathExists (root + "/users/default.nix")) (
-                    root + "/users/default.nix"
-                  )
                   ++ nixpkgs.lib.optional (builtins.pathExists (root + "/modules/default.nix")) (
                     root + "/modules/default.nix"
                   )
@@ -63,43 +60,28 @@
                 };
               }) (manifest.hosts or [ ])
             );
+          };
 
-            homeConfigurations = builtins.listToAttrs (
-              builtins.concatMap (
-                hostCfg:
-                let
-                  pkgs = import nixpkgs {
-                    system = hostCfg.arch;
-                    overlays = builtins.attrValues overlays;
-                  };
-                  enabledUsers = getEnabledUsers hostCfg;
-                  hmUsers = builtins.filter (u: u.home or false) enabledUsers;
-                in
-                map (
-                  user:
-                  let
-                    userHomeFile = root + "/users/${user.name}/home.nix";
-                  in
-                  {
-                    name = "${user.name}@${hostCfg.name}";
-                    value = home-manager.lib.homeManagerConfiguration {
-                      inherit pkgs;
-                      extraSpecialArgs = {
-                        inherit inputs;
-                      };
-                      modules = [
-                        {
-                          home.username = user.name;
-                          home.homeDirectory = "/home/${user.name}";
-                          _module.args.userData = user;
-                        }
-                      ]
-                      ++ nixpkgs.lib.optional (builtins.pathExists userHomeFile) userHomeFile;
-                    };
-                  }
-                ) hmUsers
-              ) (manifest.hosts or [ ])
-            );
+        wrapPackage =
+          {
+            pkgs,
+            pkg,
+            deps ? [ ],
+            env ? { },
+          }:
+          pkgs.symlinkJoin {
+            name = "${pkg.pname or pkg.name or "package"}-wrapped";
+            paths = [ pkg ];
+            nativeBuildInputs = [ pkgs.makeWrapper ];
+            postBuild = ''
+              for bin in $out/bin/*; do
+                if [ -f "$bin" ] && [ -x "$bin" ]; then
+                  wrapProgram "$bin" \
+                    ${pkgs.lib.optionalString (deps != [ ]) "--prefix PATH : ${pkgs.lib.makeBinPath deps}"} \
+                    ${pkgs.lib.concatStringsSep " " (pkgs.lib.mapAttrsToList (k: v: "--set \"${k}\" \"${v}\"") env)}
+                fi
+              done
+            '';
           };
       };
       packages = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (
@@ -178,9 +160,39 @@
               };
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            home-manager.extraSpecialArgs = {
+              inherit inputs;
+            };
+            home-manager.users = let
+              osConfig = config;
+            in builtins.listToAttrs (
+              map (user: {
+                name = user.name;
+                value = let
+                  userHomeFile = root + "/users/${user.name}/home.nix";
+                in
+                { config, ... }:
+                {
+                  imports = [
+                    {
+                      home.username = user.name;
+                      home.homeDirectory = "/home/${user.name}";
+                      _module.args.userData = user;
+                      home.file.".ataraxia".source = config.lib.file.mkOutOfStoreSymlink "${toString osConfig.ataraxia.root}/users/${user.name}";
+                    }
+                  ] ++ nixpkgs.lib.optional (builtins.pathExists userHomeFile) userHomeFile;
+                };
+              }) (builtins.filter (u: u.home or false) enabledUsers)
+            );
 
             environment.systemPackages = [
-              self.packages.${pkgs.system}.ataraxia
+              (self.lib.wrapPackage {
+                inherit pkgs;
+                pkg = self.packages.${pkgs.system}.ataraxia;
+                env = {
+                  ATARAXIA_WORKSPACE = "${config.ataraxia.root}";
+                };
+              })
             ];
           };
         };
