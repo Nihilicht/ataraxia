@@ -8,7 +8,8 @@
       overlays ? { },
     }:
     let
-      manifest = builtins.fromTOML (builtins.readFile (root + "/manifest.toml"));
+      immutableRoot = if inputs ? self then inputs.self else root;
+      manifest = builtins.fromTOML (builtins.readFile (immutableRoot + "/manifest.toml"));
 
       getEnabledUsers =
         hostCfg: builtins.filter (u: builtins.elem u.name (hostCfg.users or [ ])) (manifest.users or [ ]);
@@ -35,11 +36,11 @@
                 ataraxia.enabledUsers = getEnabledUsers hostCfg;
               })
             ]
-            ++ nixpkgs.lib.optional (builtins.pathExists (root + "/hosts/${hostCfg.name}/default.nix")) (
-              root + "/hosts/${hostCfg.name}/default.nix"
+            ++ nixpkgs.lib.optional (builtins.pathExists (immutableRoot + "/hosts/${hostCfg.name}/default.nix")) (
+              immutableRoot + "/hosts/${hostCfg.name}/default.nix"
             )
-            ++ nixpkgs.lib.optional (builtins.pathExists (root + "/modules/default.nix")) (
-              root + "/modules/default.nix"
+            ++ nixpkgs.lib.optional (builtins.pathExists (immutableRoot + "/modules/default.nix")) (
+              immutableRoot + "/modules/default.nix"
             )
             ++ extraModules;
           };

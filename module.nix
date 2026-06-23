@@ -10,7 +10,7 @@
   ...
 }:
 let
-  immutableRoot = /. + config.ataraxia.root;
+  immutableRoot = if inputs ? self then inputs.self else config.ataraxia.root;
   mutableRoot = config.ataraxia.root;
 in
 {
