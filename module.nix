@@ -152,6 +152,11 @@ in
       (self.lib.wrapPackage {
         inherit pkgs;
         pkg = self.packages.${pkgs.system}.ataraxia;
+        deps = [
+          pkgs.git
+          pkgs.nix
+          home-manager.packages.${pkgs.system}.home-manager
+        ];
         env = {
           ATARAXIA_WORKSPACE = mutableRoot;
         };
@@ -163,6 +168,11 @@ in
         (self.lib.wrapPackage {
           inherit pkgs;
           pkg = self.packages.${pkgs.system}.ataraxia;
+          deps = [
+            pkgs.git
+            pkgs.nix
+            home-manager.packages.${pkgs.system}.home-manager
+          ];
           env = {
             ATARAXIA_WORKSPACE = "/ataraxia-workspace";
           };

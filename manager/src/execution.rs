@@ -19,7 +19,20 @@ impl ResolvedTarget {
     }
 }
 
-
+fn find_in_path(executable: &str) -> Option<std::path::PathBuf> {
+    std::env::var_os("PATH").and_then(|paths| {
+        std::env::split_paths(&paths)
+            .filter_map(|dir| {
+                let full_path = dir.join(executable);
+                if full_path.is_file() {
+                    Some(full_path)
+                } else {
+                    None
+                }
+            })
+            .next()
+    })
+}
 
 fn has_system_changes(workspace: &std::path::Path, host: &str, ctx: &impl crate::context::Context) -> anyhow::Result<bool> {
     let output = ctx.run_command_with_output("nix", &[
@@ -182,10 +195,13 @@ impl cli::Commands {
                         if !has_system_changes(workspace, host, ctx)? {
                             tracing::info!("No system changes detected for host '{}'. Skipping rebuild.", host);
                         } else {
+                            let nixos_rebuild_bin = find_in_path("nixos-rebuild")
+                                .map(|p| p.to_string_lossy().into_owned())
+                                .unwrap_or_else(|| "nixos-rebuild".to_string());
                             let flake_arg = format!("{}#{}", workspace.to_string_lossy(), host);
                             if ctx.is_root() {
                                 ctx.run_command(
-                                    "nixos-rebuild",
+                                    &nixos_rebuild_bin,
                                     &["switch", "--flake", &flake_arg],
                                     workspace,
                                     dry_run,
@@ -194,7 +210,7 @@ impl cli::Commands {
                                 tracing::info!("System-level changes detected. Elevating...");
                                 ctx.run_command(
                                     "sudo",
-                                    &["nixos-rebuild", "switch", "--flake", &flake_arg],
+                                    &[nixos_rebuild_bin.as_str(), "switch", "--flake", &flake_arg],
                                     workspace,
                                     dry_run,
                                 )?;
@@ -202,6 +218,10 @@ impl cli::Commands {
                         }
                     }
                     ResolvedTarget::User { host, users } => {
+                        let home_manager_bin = find_in_path("home-manager")
+                            .map(|p| p.to_string_lossy().into_owned())
+                            .unwrap_or_else(|| "home-manager".to_string());
+
                         for user in users {
                             let hm_flake_arg = format!(
                                 "{}#{}@{}",
@@ -212,7 +232,7 @@ impl cli::Commands {
                             let current_user_env = ctx.get_current_user().unwrap_or_default();
                             if user == &current_user_env || ctx.is_root() {
                                 ctx.run_command(
-                                    "home-manager",
+                                    &home_manager_bin,
                                     &["switch", "--flake", &hm_flake_arg],
                                     workspace,
                                     dry_run,
@@ -221,7 +241,7 @@ impl cli::Commands {
                                 tracing::info!("Switching configuration for user '{}'. Elevating...", user);
                                 ctx.run_command(
                                     "sudo",
-                                    &["-u", user, "home-manager", "switch", "--flake", &hm_flake_arg],
+                                    &["-u", user, home_manager_bin.as_str(), "switch", "--flake", &hm_flake_arg],
                                     workspace,
                                     dry_run,
                                 )?;
@@ -622,7 +642,7 @@ mod tests {
 
         let commands = ctx.commands_run.lock().unwrap();
         // Should use sudo because ctx.is_root() == false
-        assert!(commands.contains(&"sudo nixos-rebuild switch --flake /tmp/workspace#workstation".to_string()));
+        assert!(commands.iter().any(|c| c.contains("nixos-rebuild switch --flake /tmp/workspace#workstation")));
     }
 
     #[test]
@@ -655,7 +675,7 @@ mod tests {
 
         let commands = ctx.commands_run.lock().unwrap();
         // Should use sudo because current_user (guest) != target_user (admin) and not root
-        assert!(commands.contains(&"sudo -u admin home-manager switch --flake /tmp/workspace#admin@workstation".to_string()));
+        assert!(commands.iter().any(|c| c.contains("home-manager switch --flake /tmp/workspace#admin@workstation")));
     }
 
 }
