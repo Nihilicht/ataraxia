@@ -16,6 +16,12 @@
     description = "Path to the root of the configuration repository";
   };
 
+  options.ataraxia.mutableRoot = lib.mkOption {
+    type = lib.types.nullOr lib.types.str;
+    default = null;
+    description = "Mutable path to the root of the configuration repository on the host. If set, the manager CLI is wrapped and installed.";
+  };
+
   options.ataraxia.manifest = lib.mkOption {
     type = lib.types.attrs;
     default =
@@ -135,7 +141,7 @@
             home.homeDirectory = "/home/${user.name}";
             _module.args.userData = user;
             _module.args.inputs = userInputs;
-            home.file.".ataraxia".source = config.lib.file.mkOutOfStoreSymlink "${toString osConfig.ataraxia.root}/users/${user.name}";
+            home.file.".ataraxia".source = config.lib.file.mkOutOfStoreSymlink "${if osConfig.ataraxia.mutableRoot != null then osConfig.ataraxia.mutableRoot else toString osConfig.ataraxia.root}/users/${user.name}";
           };
 
           imports = nixpkgs.lib.optional (builtins.pathExists userHomeFile) userHomeFile;
@@ -145,19 +151,29 @@
 
     environment.systemPackages = [
       pkgs.git
-      (self.lib.wrapPackage {
+    ] ++ lib.optional (config.ataraxia.mutableRoot != null) (
+      self.lib.wrapPackage {
         inherit pkgs;
         pkg = self.packages.${pkgs.system}.ataraxia;
         env = {
-          ATARAXIA_WORKSPACE = toString config.ataraxia.root;
+          ATARAXIA_WORKSPACE = config.ataraxia.mutableRoot;
         };
-      })
-    ];
+      }
+    );
 
-    virtualisation.vmVariant = {
+    virtualisation.vmVariant = lib.mkIf (config.ataraxia.mutableRoot != null) {
+      environment.systemPackages = [
+        (self.lib.wrapPackage {
+          inherit pkgs;
+          pkg = self.packages.${pkgs.system}.ataraxia;
+          env = {
+            ATARAXIA_WORKSPACE = "/ataraxia-workspace";
+          };
+        })
+      ];
       environment.variables.ATARAXIA_WORKSPACE = "/ataraxia-workspace";
       virtualisation.sharedDirectories.ataraxia-workspace = {
-        source = toString config.ataraxia.root;
+        source = config.ataraxia.mutableRoot;
         target = "/ataraxia-workspace";
       };
     };

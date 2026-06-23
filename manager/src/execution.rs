@@ -24,7 +24,7 @@ impl ResolvedTarget {
 fn has_system_changes(workspace: &std::path::Path, host: &str, ctx: &impl crate::context::Context) -> anyhow::Result<bool> {
     let output = ctx.run_command_with_output("nix", &[
         "eval", "--raw",
-        &format!(".#nixosConfigurations.{}.config.system.build.toplevel.drvPath", host),
+        &format!(".#nixosConfigurations.{}.config.system.build.toplevel", host),
     ], workspace).map_err(|e| anyhow::anyhow!("failed to evaluate system configuration: {}", e))?;
 
     let current = ctx.read_link(std::path::Path::new("/run/current-system"))
@@ -607,7 +607,7 @@ mod tests {
         let mut ctx = MockContext::new("workstation", "guest", false);
         ctx.set_active_system("/nix/store/111-nixos-system-workstation");
         ctx.mock_output(
-            "nix eval --raw --extra-experimental-features nix-command flakes .#nixosConfigurations.workstation.config.system.build.toplevel.drvPath",
+            "nix eval --raw .#nixosConfigurations.workstation.config.system.build.toplevel",
             "/nix/store/222-nixos-system-workstation-new"
         );
 
