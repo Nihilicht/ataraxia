@@ -148,6 +148,9 @@
       (self.lib.wrapPackage {
         inherit pkgs;
         pkg = self.packages.${pkgs.system}.ataraxia;
+        env = {
+          ATARAXIA_WORKSPACE = toString config.ataraxia.root;
+        };
       })
     ];
 
