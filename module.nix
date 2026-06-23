@@ -9,24 +9,22 @@
   inputs,
   ...
 }:
+let
+  immutableRoot = /. + config.ataraxia.root;
+  mutableRoot = config.ataraxia.root;
+in
 {
   options.ataraxia.root = lib.mkOption {
-    type = lib.types.path;
+    type = lib.types.str;
     readOnly = true;
     description = "Path to the root of the configuration repository";
-  };
-
-  options.ataraxia.mutableRoot = lib.mkOption {
-    type = lib.types.nullOr lib.types.str;
-    default = null;
-    description = "Mutable path to the root of the configuration repository on the host. If set, the manager CLI is wrapped and installed.";
   };
 
   options.ataraxia.manifest = lib.mkOption {
     type = lib.types.attrs;
     default =
-      if builtins.pathExists (config.ataraxia.root + "/manifest.toml") then
-        builtins.fromTOML (builtins.readFile (config.ataraxia.root + "/manifest.toml"))
+      if builtins.pathExists (immutableRoot + "/manifest.toml") then
+        builtins.fromTOML (builtins.readFile (immutableRoot + "/manifest.toml"))
       else
         { };
     readOnly = true;
@@ -52,7 +50,7 @@
         message = "ataraxia.root must be defined.";
       }
       {
-        assertion = builtins.pathExists (config.ataraxia.root + "/manifest.toml");
+        assertion = builtins.pathExists (immutableRoot + "/manifest.toml");
         message = "ataraxia: manifest.toml is required at the root of the configuration repository.";
       }
       {
@@ -98,7 +96,7 @@
       map (user: {
         name = user.name;
         value = let
-          userHomeFile = osConfig.ataraxia.root + "/users/${user.name}/home.nix";
+          userHomeFile = immutableRoot + "/users/${user.name}/home.nix";
 
           # Only expose nixpkgs + explicitly allowed inputs to this user
           allowedInputNames = [ "nixpkgs" ] ++ (user.inputs or [ ]);
@@ -141,7 +139,7 @@
             home.homeDirectory = "/home/${user.name}";
             _module.args.userData = user;
             _module.args.inputs = userInputs;
-            home.file.".ataraxia".source = config.lib.file.mkOutOfStoreSymlink "${if osConfig.ataraxia.mutableRoot != null then osConfig.ataraxia.mutableRoot else toString osConfig.ataraxia.root}/users/${user.name}";
+            home.file.".ataraxia".source = config.lib.file.mkOutOfStoreSymlink "${mutableRoot}/users/${user.name}";
           };
 
           imports = nixpkgs.lib.optional (builtins.pathExists userHomeFile) userHomeFile;
@@ -151,17 +149,16 @@
 
     environment.systemPackages = [
       pkgs.git
-    ] ++ lib.optional (config.ataraxia.mutableRoot != null) (
-      self.lib.wrapPackage {
+      (self.lib.wrapPackage {
         inherit pkgs;
         pkg = self.packages.${pkgs.system}.ataraxia;
         env = {
-          ATARAXIA_WORKSPACE = config.ataraxia.mutableRoot;
+          ATARAXIA_WORKSPACE = mutableRoot;
         };
-      }
-    );
+      })
+    ];
 
-    virtualisation.vmVariant = lib.mkIf (config.ataraxia.mutableRoot != null) {
+    virtualisation.vmVariant = {
       environment.systemPackages = [
         (self.lib.wrapPackage {
           inherit pkgs;
@@ -173,7 +170,7 @@
       ];
       environment.variables.ATARAXIA_WORKSPACE = "/ataraxia-workspace";
       virtualisation.sharedDirectories.ataraxia-workspace = {
-        source = config.ataraxia.mutableRoot;
+        source = mutableRoot;
         target = "/ataraxia-workspace";
       };
     };
