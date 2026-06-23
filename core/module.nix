@@ -6,6 +6,7 @@
   root,
   hostCfg,
   enabledUsers,
+  inputs,
   ...
 }:
 {
@@ -55,9 +56,6 @@
       };
     home-manager.useGlobalPkgs = true;
     home-manager.useUserPackages = true;
-    home-manager.extraSpecialArgs = {
-      inherit inputs;
-    };
     home-manager.users = let
       osConfig = config;
     in builtins.listToAttrs (
@@ -65,6 +63,15 @@
         name = user.name;
         value = let
           userHomeFile = root + "/users/${user.name}/home.nix";
+
+          # Only expose nixpkgs + explicitly allowed inputs to this user
+          allowedInputNames = [ "nixpkgs" ] ++ (user.inputs or [ ]);
+          userInputs = builtins.listToAttrs (
+            map (inputName: {
+              name = inputName;
+              value = inputs.${inputName};
+            }) allowedInputNames
+          );
         in
         { config, ... }:
         {
@@ -73,6 +80,7 @@
               home.username = user.name;
               home.homeDirectory = "/home/${user.name}";
               _module.args.userData = user;
+              _module.args.inputs = userInputs;
               home.file.".ataraxia".source = config.lib.file.mkOutOfStoreSymlink "${toString osConfig.ataraxia.root}/users/${user.name}";
             }
           ] ++ nixpkgs.lib.optional (builtins.pathExists userHomeFile) userHomeFile;

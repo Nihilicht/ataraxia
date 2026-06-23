@@ -38,6 +38,26 @@
         "type": "github"
       }
     },
+    "honkers-railway-launcher": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1782166451,
+        "narHash": "sha256-SA7LyrayyZBvtzZnesnSLV7haciFuVLeZaX2hd5v4j4=",
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "rev": "471a1d2f840eb7fcbdfd541d99c13a64096f46db",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1781607440,
@@ -55,6 +75,7 @@
     "root": {
       "inputs": {
         "ataraxia": "ataraxia",
+        "honkers-railway-launcher": "honkers-railway-launcher",
         "nixpkgs": "nixpkgs"
       }
     }
