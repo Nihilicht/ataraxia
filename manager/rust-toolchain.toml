@@ -1,0 +1,10 @@
+[toolchain]
+channel = "stable" # Or "nightly", "1.78.0", etc.
+components = [
+  "cargo",
+  "rustc",
+  "rustfmt",
+  "clippy",
+  "rust-src",       # Required for rust-analyzer to navigate standard library
+  "rust-analyzer"   # Builds/fetches matching rust-analyzer
+]
