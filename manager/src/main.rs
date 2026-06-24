@@ -29,5 +29,7 @@ fn main() -> anyhow::Result<()> {
     tracing::subscriber::set_global_default(subscriber)
         .expect("failed to set global subscriber");
 
+    tracing::info!("Workspace: {:?}", cli.workspace);
+
     cli.exec()
 }

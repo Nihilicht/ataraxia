@@ -198,7 +198,7 @@ impl cli::Commands {
                             let nixos_rebuild_bin = find_in_path("nixos-rebuild")
                                 .map(|p| p.to_string_lossy().into_owned())
                                 .unwrap_or_else(|| "nixos-rebuild".to_string());
-                            let flake_arg = format!("{}#{}", workspace.to_string_lossy(), host);
+                            let flake_arg = format!(".#{}", host);
                             if ctx.is_root() {
                                 ctx.run_command(
                                     &nixos_rebuild_bin,
@@ -224,8 +224,7 @@ impl cli::Commands {
 
                         for user in users {
                             let hm_flake_arg = format!(
-                                "{}#{}@{}",
-                                workspace.to_string_lossy(),
+                                ".#{}@{}",
                                 user,
                                 host
                             );
@@ -627,7 +626,7 @@ mod tests {
         let mut ctx = MockContext::new("workstation", "guest", false);
         ctx.set_active_system("/nix/store/111-nixos-system-workstation");
         ctx.mock_output(
-            "nix eval --raw --extra-experimental-features nix-command flakes .#nixosConfigurations.workstation.config.system.build.toplevel.drvPath",
+            "nix eval --raw .#nixosConfigurations.workstation.config.system.build.toplevel.drvPath",
             "/nix/store/222-nixos-system-workstation-new"
         );
 
@@ -642,7 +641,7 @@ mod tests {
 
         let commands = ctx.commands_run.lock().unwrap();
         // Should use sudo because ctx.is_root() == false
-        assert!(commands.iter().any(|c| c.contains("nixos-rebuild switch --flake /tmp/workspace#workstation")));
+        assert!(commands.iter().any(|c| c.contains("nixos-rebuild switch --flake .#workstation")));
     }
 
     #[test]
@@ -675,7 +674,7 @@ mod tests {
 
         let commands = ctx.commands_run.lock().unwrap();
         // Should use sudo because current_user (guest) != target_user (admin) and not root
-        assert!(commands.iter().any(|c| c.contains("home-manager switch --flake /tmp/workspace#admin@workstation")));
+        assert!(commands.iter().any(|c| c.contains("home-manager switch --flake .#admin@workstation")));
     }
 
 }

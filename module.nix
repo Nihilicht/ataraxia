@@ -1,4 +1,9 @@
-{ self, nixpkgs, home-manager, ... }@inputs:
+{
+  self,
+  nixpkgs,
+  home-manager,
+  ...
+}@inputs:
 {
   config,
   lib,
@@ -67,7 +72,10 @@ in
       }
     ];
 
-    nix.settings.experimental-features = [ "nix-command" "flakes" ];
+    nix.settings.experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
     programs.git.enable = true;
     programs.git.config.safe.directory = "*";
     security.sudo.extraConfig = ''
@@ -90,62 +98,71 @@ in
       };
     home-manager.useGlobalPkgs = true;
     home-manager.useUserPackages = true;
-    home-manager.users = let
-      osConfig = config;
-    in builtins.listToAttrs (
-      map (user: {
-        name = user.name;
-        value = let
-          userHomeFile = immutableRoot + "/users/${user.name}/home.nix";
+    home-manager.users =
+      let
+        osConfig = config;
+      in
+      builtins.listToAttrs (
+        map (user: {
+          name = user.name;
+          value =
+            let
+              userHomeFile = immutableRoot + "/users/${user.name}/home.nix";
 
-          # Only expose nixpkgs + explicitly allowed inputs to this user
-          allowedInputNames = [ "nixpkgs" ] ++ (user.inputs or [ ]);
-          userInputs = builtins.listToAttrs (
-            map (inputName: {
-              name = inputName;
-              value = inputs.${inputName};
-            }) allowedInputNames
-          );
-        in
-        { config, userData ? null, inputs ? null, ... }:
-        {
-          options.ataraxia.user.data = lib.mkOption {
-            type = lib.types.attrs;
-            readOnly = true;
-            description = "Metadata of the current user";
-          };
-          options.ataraxia.user.inputs = lib.mkOption {
-            type = lib.types.attrs;
-            readOnly = true;
-            description = "Flake inputs accessible by the current user";
-          };
+              # Only expose nixpkgs + explicitly allowed inputs to this user
+              allowedInputNames = [ "nixpkgs" ] ++ (user.inputs or [ ]);
+              userInputs = builtins.listToAttrs (
+                map (inputName: {
+                  name = inputName;
+                  value = inputs.${inputName};
+                }) allowedInputNames
+              );
+            in
+            {
+              config,
+              userData ? null,
+              inputs ? null,
+              ...
+            }:
+            {
+              options.ataraxia.user.data = lib.mkOption {
+                type = lib.types.attrs;
+                readOnly = true;
+                description = "Metadata of the current user";
+              };
+              options.ataraxia.user.inputs = lib.mkOption {
+                type = lib.types.attrs;
+                readOnly = true;
+                description = "Flake inputs accessible by the current user";
+              };
 
-          config = {
-            ataraxia.user.data = user;
-            ataraxia.user.inputs = userInputs;
+              config = {
+                ataraxia.user.data = user;
+                ataraxia.user.inputs = userInputs;
 
-            assertions = [
-              {
-                assertion = userData != null && userData == config.ataraxia.user.data;
-                message = "Ataraxia security boundary violation: userData argument has been overridden or is missing.";
-              }
-              {
-                assertion = inputs != null && inputs == config.ataraxia.user.inputs;
-                message = "Ataraxia security boundary violation: inputs argument has been overridden or is missing.";
-              }
-            ];
+                assertions = [
+                  {
+                    assertion = userData != null && userData == config.ataraxia.user.data;
+                    message = "Ataraxia security boundary violation: userData argument has been overridden or is missing.";
+                  }
+                  {
+                    assertion = inputs != null && inputs == config.ataraxia.user.inputs;
+                    message = "Ataraxia security boundary violation: inputs argument has been overridden or is missing.";
+                  }
+                ];
 
-            home.username = user.name;
-            home.homeDirectory = "/home/${user.name}";
-            _module.args.userData = user;
-            _module.args.inputs = userInputs;
-            home.file.".ataraxia".source = config.lib.file.mkOutOfStoreSymlink "${mutableRoot}/users/${user.name}";
-          };
+                home.username = user.name;
+                home.homeDirectory = "/home/${user.name}";
+                _module.args.userData = user;
+                _module.args.inputs = userInputs;
+                home.file.".ataraxia".source =
+                  config.lib.file.mkOutOfStoreSymlink "${mutableRoot}/users/${user.name}";
+              };
 
-          imports = nixpkgs.lib.optional (builtins.pathExists userHomeFile) userHomeFile;
-        };
-      }) (builtins.filter (u: u.home or false) enabledUsers)
-    );
+              imports = nixpkgs.lib.optional (builtins.pathExists userHomeFile) userHomeFile;
+            };
+        }) (builtins.filter (u: u.home or false) enabledUsers)
+      );
 
     environment.systemPackages = [
       pkgs.git
@@ -164,24 +181,9 @@ in
     ];
 
     virtualisation.vmVariant = {
-      environment.systemPackages = [
-        (self.lib.wrapPackage {
-          inherit pkgs;
-          pkg = self.packages.${pkgs.system}.ataraxia;
-          deps = [
-            pkgs.git
-            pkgs.nix
-            home-manager.packages.${pkgs.system}.home-manager
-          ];
-          env = {
-            ATARAXIA_WORKSPACE = "/ataraxia-workspace";
-          };
-        })
-      ];
-      environment.variables.ATARAXIA_WORKSPACE = "/ataraxia-workspace";
       virtualisation.sharedDirectories.ataraxia-workspace = {
         source = mutableRoot;
-        target = "/ataraxia-workspace";
+        target = mutableRoot;
       };
     };
   };
