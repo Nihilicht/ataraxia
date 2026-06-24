@@ -10,7 +10,7 @@
   pkgs,
   root,
   hostCfg,
-  enabledUsers,
+  users,
   inputs,
   ...
 }:
@@ -42,7 +42,7 @@ in
     description = "Configuration details for the current host";
   };
 
-  options.ataraxia.enabledUsers = lib.mkOption {
+  options.ataraxia.users = lib.mkOption {
     type = lib.types.listOf lib.types.attrs;
     readOnly = true;
     description = "List of users enabled on this host";
@@ -67,8 +67,8 @@ in
         message = "Ataraxia security boundary violation: hostCfg argument has been overridden.";
       }
       {
-        assertion = enabledUsers == config.ataraxia.enabledUsers;
-        message = "Ataraxia security boundary violation: enabledUsers argument has been overridden.";
+        assertion = users == config.ataraxia.users;
+        message = "Ataraxia security boundary violation: users argument has been overridden.";
       }
     ];
 
@@ -91,13 +91,16 @@ in
             extraGroups = user.groups or [ ];
             initialPassword = lib.mkDefault "";
           };
-        }) enabledUsers
+        }) users
       )
       // {
         root.initialPassword = lib.mkDefault "";
       };
     home-manager.useGlobalPkgs = true;
     home-manager.useUserPackages = true;
+    home-manager.extraSpecialArgs = {
+      ataraxia = self;
+    };
     home-manager.users =
       let
         osConfig = config;
@@ -122,6 +125,7 @@ in
               config,
               userData ? null,
               inputs ? null,
+              ataraxia ? null,
               ...
             }:
             {
@@ -161,7 +165,7 @@ in
 
               imports = nixpkgs.lib.optional (builtins.pathExists userHomeFile) userHomeFile;
             };
-        }) (builtins.filter (u: u.home or false) enabledUsers)
+        }) (builtins.filter (u: u.home or false) users)
       );
 
     environment.systemPackages = [

@@ -23,7 +23,8 @@
             specialArgs = {
               inherit root inputs hostCfg;
               hostName = hostCfg.name;
-              enabledUsers = getEnabledUsers hostCfg;
+              users = getEnabledUsers hostCfg;
+              ataraxia = self;
             };
             modules = [
               self.nixosModules.default
@@ -33,7 +34,7 @@
                 nix.registry.nixpkgs.flake = nixpkgs;
                 ataraxia.root = root;
                 ataraxia.hostCfg = hostCfg;
-                ataraxia.enabledUsers = getEnabledUsers hostCfg;
+                ataraxia.users = getEnabledUsers hostCfg;
               })
             ]
             ++ nixpkgs.lib.optional (builtins.pathExists (immutableRoot + "/hosts/${hostCfg.name}/default.nix")) (
