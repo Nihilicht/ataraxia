@@ -1,15 +1,25 @@
-{ self, nixpkgs, home-manager, ... }@inputs:
+{
+  self,
+  nixpkgs,
+  home-manager,
+  ...
+}@inputs:
 {
   mkSystems =
     {
       root,
       inputs ? { },
-      extraModules ? [ ],
+      modules ? [ ],
       overlays ? { },
     }:
     let
       immutableRoot = if inputs ? self then inputs.self else root;
-      manifest = builtins.fromTOML (builtins.readFile (immutableRoot + "/manifest.toml"));
+      manifestPath = immutableRoot + "/manifest.toml";
+      manifest =
+        if builtins.pathExists manifestPath then
+          builtins.fromTOML (builtins.readFile manifestPath)
+        else
+          { };
 
       getEnabledUsers =
         hostCfg: builtins.filter (u: builtins.elem u.name (hostCfg.users or [ ])) (manifest.users or [ ]);
@@ -37,13 +47,13 @@
                 ataraxia.users = getEnabledUsers hostCfg;
               })
             ]
-            ++ nixpkgs.lib.optional (builtins.pathExists (immutableRoot + "/hosts/${hostCfg.name}/default.nix")) (
+            ++ nixpkgs.lib.optional (builtins.pathExists (immutableRoot + "/hosts/default.nix")) (
+              immutableRoot + "/hosts/default.nix"
+            )
+            ++ nixpkgs.lib.optional (builtins.pathExists (
               immutableRoot + "/hosts/${hostCfg.name}/default.nix"
-            )
-            ++ nixpkgs.lib.optional (builtins.pathExists (immutableRoot + "/modules/default.nix")) (
-              immutableRoot + "/modules/default.nix"
-            )
-            ++ extraModules;
+            )) (immutableRoot + "/hosts/${hostCfg.name}/default.nix")
+            ++ modules;
           };
         }) (manifest.hosts or [ ])
       );
@@ -65,7 +75,9 @@
           if [ -f "$bin" ] && [ -x "$bin" ]; then
             wrapProgram "$bin" \
               ${pkgs.lib.optionalString (deps != [ ]) "--prefix PATH : ${pkgs.lib.makeBinPath deps}"} \
-              ${pkgs.lib.concatStringsSep " " (pkgs.lib.mapAttrsToList (k: v: "--set-default \"${k}\" \"${v}\"") env)}
+              ${pkgs.lib.concatStringsSep " " (
+                pkgs.lib.mapAttrsToList (k: v: "--set-default \"${k}\" \"${v}\"") env
+              )}
           fi
         done
       '';

@@ -70,7 +70,38 @@ in
         assertion = users == config.ataraxia.users;
         message = "Ataraxia security boundary violation: users argument has been overridden.";
       }
+      {
+        assertion =
+          builtins.hasAttr "hosts" config.ataraxia.manifest
+          && builtins.hasAttr "users" config.ataraxia.manifest;
+        message = "Ataraxia: manifest.toml must define both 'hosts' and 'users' lists.";
+      }
+      {
+        assertion = builtins.elem config.ataraxia.hostCfg.name (
+          map (h: h.name) (config.ataraxia.manifest.hosts or [ ])
+        );
+        message = "Ataraxia: current host '${config.ataraxia.hostCfg.name}' is not registered in manifest.toml.";
+      }
+      {
+        assertion = lib.all (
+          uName: builtins.elem uName (map (u: u.name) (config.ataraxia.manifest.users or [ ]))
+        ) (config.ataraxia.hostCfg.users or [ ]);
+        message = "Ataraxia: one or more users assigned to host '${config.ataraxia.hostCfg.name}' are not registered globally in manifest.toml.";
+      }
     ];
+
+    warnings =
+      let
+        allAssignedUsers = lib.unique (
+          builtins.concatLists (map (h: h.users or [ ]) (config.ataraxia.manifest.hosts or [ ]))
+        );
+        globalUsers = map (u: u.name) (config.ataraxia.manifest.users or [ ]);
+        unassignedUsers = builtins.filter (uName: !builtins.elem uName allAssignedUsers) globalUsers;
+      in
+      map (
+        uName:
+        "Ataraxia: user '${uName}' is globally registered in manifest.toml but not assigned to any host."
+      ) unassignedUsers;
 
     nix.settings.experimental-features = [
       "nix-command"
@@ -82,14 +113,25 @@ in
       Defaults env_keep += "ATARAXIA_WORKSPACE"
     '';
 
+    programs.fish.enable = lib.mkDefault (builtins.any (u: (u.shell or "") == "fish") users);
+    programs.zsh.enable = lib.mkDefault (builtins.any (u: (u.shell or "") == "zsh") users);
+
     users.users =
       builtins.listToAttrs (
         map (user: {
           name = user.name;
           value = {
             isNormalUser = true;
+            createHome = user.desktop or "" != "";
             extraGroups = user.groups or [ ];
             initialPassword = lib.mkDefault "";
+            shell =
+              if (user.shell or "") == "fish" then
+                pkgs.fish
+              else if (user.shell or "") == "zsh" then
+                pkgs.zsh
+              else
+                pkgs.bashInteractive;
           };
         }) users
       )
@@ -162,10 +204,13 @@ in
                 home.file.".ataraxia".source =
                   config.lib.file.mkOutOfStoreSymlink "${mutableRoot}/users/${user.name}";
               };
-
-              imports = nixpkgs.lib.optional (builtins.pathExists userHomeFile) userHomeFile;
+              imports =
+                nixpkgs.lib.optional (builtins.pathExists (immutableRoot + "/users/default.nix")) (
+                  immutableRoot + "/users/default.nix"
+                )
+                ++ nixpkgs.lib.optional (builtins.pathExists userHomeFile) userHomeFile;
             };
-        }) (builtins.filter (u: u.home or false) users)
+        }) users
       );
 
     environment.systemPackages = [
@@ -189,6 +234,20 @@ in
         source = mutableRoot;
         target = mutableRoot;
       };
+      boot.resumeDevice = lib.mkForce "";
+      boot.consoleLogLevel = lib.mkForce 3;
+      boot.initrd.systemd.enable = lib.mkForce true;
+      boot.initrd.kernelModules = [
+        "9p"
+        "9pnet_virtio"
+      ];
+      fileSystems."/boot" = lib.mkForce {
+        device = "tmpfs";
+        fsType = "tmpfs";
+        options = [ "mode=0755" ];
+      };
+      swapDevices = lib.mkForce [ ];
+      virtualisation.qemu.options = [ "-cpu qemu64" ];
     };
   };
 }
