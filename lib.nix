@@ -23,6 +23,24 @@
 
       getEnabledUsers =
         hostCfg: builtins.filter (u: builtins.elem u.name (hostCfg.users or [ ])) (manifest.users or [ ]);
+
+      # Collect unique input names referenced by a host's enabled users
+      getUserInputNames =
+        hostCfg:
+        nixpkgs.lib.unique (builtins.concatLists (map (u: u.inputs or [ ]) (getEnabledUsers hostCfg)));
+
+      # Auto-import nixosModules.default from user-referenced inputs that export them,
+      # but skip flakes that define homeManagerModules (which indicates they are Home Manager env/dotfile flakes).
+      getInputNixosModules =
+        hostCfg:
+        builtins.concatLists (
+          map (inputName:
+            let inp = inputs.${inputName}; in
+            nixpkgs.lib.optional
+              (inp ? nixosModules && inp.nixosModules ? default && !(inp ? homeManagerModules))
+              inp.nixosModules.default
+          ) (getUserInputNames hostCfg)
+        );
     in
     {
       nixosConfigurations = builtins.listToAttrs (
@@ -47,6 +65,8 @@
                 ataraxia.users = getEnabledUsers hostCfg;
               })
             ]
+            # Auto-import nixosModules.default from user-referenced input flakes
+            ++ getInputNixosModules hostCfg
             ++ nixpkgs.lib.optional (builtins.pathExists (immutableRoot + "/hosts/default.nix")) (
               immutableRoot + "/hosts/default.nix"
             )

@@ -182,6 +182,18 @@ in
                 description = "Flake inputs accessible by the current user";
               };
 
+              # Forcefully overwrite all Home Manager managed files to avoid collision errors without leaving .backup files
+              options.xdg.configFile = lib.mkOption {
+                type = lib.types.attrsOf (lib.types.submodule {
+                  config.force = lib.mkDefault true;
+                });
+              };
+              options.home.file = lib.mkOption {
+                type = lib.types.attrsOf (lib.types.submodule {
+                  config.force = lib.mkDefault true;
+                });
+              };
+
               config = {
                 ataraxia.user.data = user;
                 ataraxia.user.inputs = userInputs;
@@ -208,7 +220,16 @@ in
                 nixpkgs.lib.optional (builtins.pathExists (immutableRoot + "/users/default.nix")) (
                   immutableRoot + "/users/default.nix"
                 )
-                ++ nixpkgs.lib.optional (builtins.pathExists userHomeFile) userHomeFile;
+                ++ nixpkgs.lib.optional (builtins.pathExists userHomeFile) userHomeFile
+                # Auto-import homeManagerModules.default from each of the user's allowed inputs
+                ++ builtins.concatLists (
+                  map (inputName:
+                    let inp = userInputs.${inputName} or null; in
+                    nixpkgs.lib.optional
+                      (inp != null && inp ? homeManagerModules && inp.homeManagerModules ? default)
+                      inp.homeManagerModules.default
+                  ) (user.inputs or [])
+                );
             };
         }) users
       );
