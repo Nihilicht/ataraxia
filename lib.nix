@@ -4,7 +4,7 @@
   home-manager,
   ...
 }@inputs:
-{
+rec {
   mkSystems =
     {
       root,
@@ -80,26 +80,66 @@
     };
 
   wrapPackage =
-    {
+    args@{
       pkgs,
       pkg,
       deps ? [ ],
       env ? { },
     }:
-    pkgs.symlinkJoin {
-      name = "${pkg.pname or pkg.name or "package"}-wrapped";
-      paths = [ pkg ];
-      nativeBuildInputs = [ pkgs.makeWrapper ];
-      postBuild = builtins.replaceStrings [ "\r" ] [ "" ] ''
-        for bin in $out/bin/*; do
-          if [ -f "$bin" ] && [ -x "$bin" ]; then
-            wrapProgram "$bin" \
-              ${pkgs.lib.optionalString (deps != [ ]) "--prefix PATH : ${pkgs.lib.makeBinPath deps}"} \
-              ${pkgs.lib.concatStringsSep " " (
-                pkgs.lib.mapAttrsToList (k: v: "--set-default \"${k}\" \"${v}\"") env
-              )}
-          fi
-        done
-      '';
-    };
+    let
+      resolvedDeps = pkgs.lib.concatMap (
+        dep:
+        if pkgs.lib.isDerivation dep then
+          [ dep ]
+        else if builtins.isAttrs dep then
+          pkgs.lib.mapAttrsToList (
+            name: val:
+            if pkgs.lib.isDerivation val then
+              let
+                binName = val.meta.mainProgram or val.pname or (builtins.parseDrvName val.name).name;
+              in
+              pkgs.writeShellScriptBin name ''
+                exec ${val}/bin/${binName} "$@"
+              ''
+            else if builtins.isList val then
+              pkgs.writeShellScriptBin name ''
+                exec ${builtins.elemAt val 0}/bin/${builtins.elemAt val 1} "$@"
+              ''
+            else if builtins.isString val then
+              pkgs.writeShellScriptBin name ''
+                exec ${val} "$@"
+              ''
+            else
+              throw "wrapPackage: Unsupported mapping target for key '${name}' in deps"
+          ) dep
+        else
+          [ dep ]
+      ) deps;
+
+      wrapped = pkgs.symlinkJoin {
+        name = "${pkg.pname or pkg.name or "package"}-wrapped";
+        paths = [ pkg ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postBuild = builtins.replaceStrings [ "\r" ] [ "" ] ''
+          for bin in $out/bin/*; do
+            if [ -f "$bin" ] && [ -x "$bin" ]; then
+              wrapProgram "$bin" \
+                ${pkgs.lib.optionalString (resolvedDeps != [ ]) "--prefix PATH : ${pkgs.lib.makeBinPath resolvedDeps}"} \
+                ${pkgs.lib.concatStringsSep " " (
+                  pkgs.lib.mapAttrsToList (k: v: "--set-default \"${k}\" \"${v}\"") env
+                )}
+            fi
+          done
+        '';
+      };
+    in
+    wrapped // (
+      pkgs.lib.optionalAttrs (pkg ? override) {
+        override = x: wrapPackage (args // { pkg = pkg.override x; });
+      }
+    ) // (
+      pkgs.lib.optionalAttrs (pkg ? overrideAttrs) {
+        overrideAttrs = x: wrapPackage (args // { pkg = pkg.overrideAttrs x; });
+      }
+    );
 }
