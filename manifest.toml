@@ -1,7 +1,7 @@
 [[hosts]]
 name = "nihilicht-sagittarius"
 arch = "x86_64-linux"
-users = ["tsukuyomi"]
+users = ["tsukuyomi", "amaterasu"]
 
 [[users]]
 name = "tsukuyomi"
@@ -9,3 +9,8 @@ groups = ["wheel"]
 desktop = "hyprland.desktop"
 shell = "fish"
 inputs = ["tsukuyomi-env", "aagl"]
+
+[[users]]
+name = "amaterasu"
+groups = ["wheel"]
+shell = "fish"
