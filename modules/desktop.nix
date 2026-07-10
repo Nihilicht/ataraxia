@@ -16,4 +16,8 @@ in {
     enable = hasHyprland;
     extraPortals = [pkgs.xdg-desktop-portal-gtk];
   };
+
+  # Keyring support
+  services.gnome.gnome-keyring.enable = hasHyprland;
+  security.pam.services.greetd.enableGnomeKeyring = hasHyprland;
 }
