@@ -3,9 +3,7 @@
   lib,
   pkgs,
   ...
-}:
-
-{
+}: {
   home.packages = with pkgs; [
     # Wayland ecosystem
     rofi
@@ -33,10 +31,10 @@
   fonts.fontconfig = {
     enable = true;
     defaultFonts = {
-      monospace = [ "Sarasa Term SC" "Noto Color Emoji" ];
-      sansSerif = [ "Sarasa Gothic SC" "Noto Color Emoji" ];
-      serif     = [ "Sarasa Gothic SC" "Noto Color Emoji" ];
-      emoji     = [ "Noto Color Emoji" ];
+      monospace = ["Sarasa Term SC" "Noto Color Emoji"];
+      sansSerif = ["Sarasa Gothic SC" "Noto Color Emoji"];
+      serif = ["Sarasa Gothic SC" "Noto Color Emoji"];
+      emoji = ["Noto Color Emoji"];
     };
   };
 

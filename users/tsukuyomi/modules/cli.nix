@@ -3,9 +3,7 @@
   lib,
   pkgs,
   ...
-}:
-
-{
+}: {
   home.packages = with pkgs; [
     wl-clipboard
     fastfetch
@@ -21,6 +19,7 @@
     # AI / CLI Agents
     gemini-cli
     codex
+    deepagents-code
   ];
 
   programs.fish.enable = true;

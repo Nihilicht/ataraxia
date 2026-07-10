@@ -1,11 +1,9 @@
 {
-  pkgs ? import <nixpkgs> { },
-}:
-
-{
-  # The ataraxia configuration manager
-  ataraxia-cli = pkgs.callPackage ./ataraxia-cli.nix { };
-
+  inputs,
+  pkgs ? import <nixpkgs> {},
+}: {
   # Example of how to add a package:
-  # my-package = pkgs.callPackage ./my-package { };
+  deepagents-code = pkgs.callPackage ./deepagents-code.nix {
+    inherit (inputs) uv2nix pyproject-nix pyproject-build-systems;
+  };
 }

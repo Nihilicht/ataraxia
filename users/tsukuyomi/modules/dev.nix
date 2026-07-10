@@ -2,15 +2,14 @@
   config,
   lib,
   pkgs,
-  nixataraxia,
+  ataraxia,
   ...
-}:
-
-{
+}: {
   home.packages = with pkgs; [
     # Private dependency isolation for Helix
-    (nixataraxia.wrapWithDeps {
-      package = helix;
+    (ataraxia.lib.wrapPackage {
+      inherit pkgs;
+      pkg = helix;
       deps = [
         lua-language-server
         nixd
@@ -22,11 +21,6 @@
     uv
     gh
   ];
-
-  programs.direnv = {
-    enable = true;
-    nix-direnv.enable = true;
-  };
 
   xdg.configFile."helix".source = ../dotfiles/helix;
 }

@@ -1,12 +1,18 @@
-{ config, pkgs, ... }:
-
-{
+{pkgs, ...}: {
   imports = [
-    ./hardware-configuration.nix # Hardware scan results
+    ./hardware-configuration.nix
   ];
+
+  time.timeZone = "Asia/Manila";
+  i18n.defaultLocale = "en_US.UTF-8";
+
+  networking.dhcpcd.extraConfig = "nohook resolv.conf";
 
   # Location of the swap partition/file for hibernation/resume.
   boot.resumeDevice = "/dev/disk/by-uuid/34819098-9b4a-4c8a-9274-bfea8f0df233";
+
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.supportedFilesystems = ["ntfs3"];
 
   # Shared NTFS partition for interoperability with Windows.
   fileSystems."/mnt/shared" = {
@@ -26,9 +32,35 @@
     ];
   };
 
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It's NOT the version of your packages.
-  # DO NOT CHANGE unless you have read the documentation for it.
-  system.stateVersion = "26.05";
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
+  systemd.services.disk-monitor = {
+    description = "Lightweight storage and mount state monitor";
+    wantedBy = ["multi-user.target"];
+
+    # Provide the exact packages containing mount, df, grep, and dmesg
+    path = with pkgs; [
+      util-linux # contains: mount, dmesg
+      coreutils # contains: df, sleep, date
+      gnugrep # contains: grep
+    ];
+
+    serviceConfig = {
+      Type = "simple";
+      Restart = "always";
+      RestartSec = 10;
+    };
+
+    script = ''
+      while true; do
+        echo "=== Telemetry Mark: $(date -u) ==="
+        mount | grep "on / "
+        df -h /
+        df -i /
+        dmesg | tail -n 15
+        sleep 10
+      done
+    '';
+  };
 }

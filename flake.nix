@@ -1,14 +1,29 @@
 {
+  description = "Ataraxia application flake";
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    aagl = {
-      url = "github:ezKEa/aagl-gtk-on-nix";
+    pyproject-nix = {
+      url = "github:pyproject-nix/pyproject.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    home-manager = {
-      url = "github:nix-community/home-manager";
+    uv2nix = {
+      url = "github:pyproject-nix/uv2nix";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    pyproject-build-systems = {
+      url = "github:pyproject-nix/build-system-pkgs";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+      inputs.uv2nix.follows = "uv2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    aagl = {
+      url = "github:ezKEa/aagl-gtk-on-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -22,112 +37,149 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    antigravity-nix = {
+      url = "github:jacopone/antigravity-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     tsukuyomi-env = {
       url = "github:Nihilicht/tsukuyomi-env";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.helium.follows = "helium";
     };
+
+    devenv = {
+      url = "github:cachix/devenv";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs =
-    {
-      nixpkgs,
-      home-manager,
-      ...
-    }@inputs:
-    let
-      manifest = fromTOML (builtins.readFile ./manifest.toml);
+  outputs = {
+    self,
+    nixpkgs,
+    devenv,
+    home-manager,
+    ...
+  } @ inputs: let
+    system = "x86_64-linux";
+    pkgs = nixpkgs.legacyPackages.${system};
+    lib = nixpkgs.lib;
 
-      # Pass all inputs to overlays
-      overlays = import ./overlays { inherit inputs; };
+    manifest = builtins.fromTOML (builtins.readFile ./manifest.toml);
 
-      # Global library
-      nixataraxia = import ./lib;
+    hosts = lib.listToAttrs (map (h: {
+        name = h.name;
+        value = h;
+      })
+      manifest.hosts);
+    users = lib.listToAttrs (map (u: {
+        name = u.name;
+        value = u;
+      })
+      manifest.users);
 
-      # Registered environments: maps the name in manifest.toml to the input flake
-      environments = import ./lib/environments.nix { lib = nixpkgs.lib; } {
-        tsukuyomi = inputs.tsukuyomi-env;
+    # Custom symlinkJoin + makeWrapper helper
+    wrapPackage = {
+      pkgs,
+      pkg,
+      deps ? [],
+    }:
+      pkgs.symlinkJoin {
+        name =
+          if (pkg ? pname && pkg ? version)
+          then "${pkg.pname}-${pkg.version}-wrapped"
+          else if (pkg ? name)
+          then "${pkg.name}-wrapped"
+          else "package-wrapped";
+        paths = [pkg];
+        nativeBuildInputs = [pkgs.makeWrapper];
+        postBuild = ''
+          for bin in $out/bin/*; do
+            if [ -f "$bin" ] && [ -x "$bin" ]; then
+              wrapProgram "$bin" --prefix PATH : ${pkgs.lib.makeBinPath deps}
+            fi
+          done
+        '';
       };
-
-      # Helper to filter users for a specific host
-      getEnabledUsers =
-        hostCfg: builtins.filter (u: builtins.elem u.name (hostCfg.users or [ ])) manifest.users;
-    in
-    {
-      nixosConfigurations = builtins.listToAttrs (
-        map (hostCfg: {
-          name = hostCfg.name;
-          value = nixpkgs.lib.nixosSystem {
-            system = hostCfg.arch;
+  in {
+    nixosConfigurations =
+      lib.mapAttrs (
+        hostName: hostCfg:
+          nixpkgs.lib.nixosSystem {
+            inherit system;
             specialArgs = {
-              hostName = hostCfg.name;
-              enabledUsers = getEnabledUsers hostCfg;
-              inherit
-                inputs
-                nixataraxia
-                hostCfg
-                environments
-                ;
+              inherit inputs hostCfg manifest;
+              users = builtins.attrValues users;
+              ataraxia = {
+                lib = {
+                  inherit wrapPackage;
+                };
+              };
             };
             modules = [
-              ./hosts/${hostCfg.name}/default.nix
-              ./users/default.nix
-              ./modules/default.nix
-              inputs.aagl.nixosModules.default
+              ./hosts/${hostName}
+              ./hosts/default.nix
+              ./modules
               home-manager.nixosModules.home-manager
-              (
-                { ... }:
-                {
-                  nixpkgs.overlays = builtins.attrValues overlays;
-                  nix.registry.nixpkgs.flake = nixpkgs;
-                }
-              )
-            ];
-          };
-        }) manifest.hosts
-      );
-
-      homeConfigurations =
-        builtins.listToAttrs (
-          builtins.concatMap (hostCfg:
-            let
-              pkgs = import nixpkgs {
-                system = hostCfg.arch;
-                overlays = builtins.attrValues overlays;
-              };
-              enabledUsers = getEnabledUsers hostCfg;
-              hmUsers = builtins.filter (u: u.home or false) enabledUsers;
-            in
-            map (user:
-              let
-                envName = user.environment or "";
-                isValidEnv = builtins.hasAttr envName environments;
-                envModule = if isValidEnv then [ environments.${envName} ] else [ ];
-              in
+              inputs.aagl.nixosModules.default
               {
-                name = "${user.name}@${hostCfg.name}";
-                value = home-manager.lib.homeManagerConfiguration {
-                  inherit pkgs;
+                # Apply overlays
+                nixpkgs.overlays = builtins.attrValues (import ./overlays {inherit inputs;});
+
+                # Basic configuration of home-manager
+                home-manager = {
+                  useGlobalPkgs = true;
+                  useUserPackages = true;
                   extraSpecialArgs = {
-                    nixataraxia = nixataraxia {
-                      inherit pkgs;
-                      lib = pkgs.lib;
+                    inherit inputs;
+                    ataraxia = {
+                      lib = {
+                        inherit wrapPackage;
+                      };
                     };
-                    inherit inputs environments;
                   };
-                  modules = [
-                    ./users/${user.name}/home.nix
-                    {
-                      home.username = user.name;
-                      home.homeDirectory = "/home/${user.name}";
-                      _module.args.userData = user;
-                      env.enable = isValidEnv;
-                    }
-                  ] ++ envModule;
+                  sharedModules = [
+                    ./users/default.nix
+                    inputs.tsukuyomi-env.homeManagerModules.default
+                  ];
+                  users = lib.genAttrs (hostCfg.users or []) (
+                    username: let
+                      userCfg = users.${username} or (throw "User ${username} not found in metadata");
+                    in
+                      {...}: {
+                        imports = [./users/${username}/home.nix];
+                        _module.args.userData = userCfg;
+                      }
+                  );
                 };
+
+                # Configure NixOS user accounts automatically based on the user metadata
+                users.users = lib.genAttrs (hostCfg.users or []) (
+                  username: let
+                    u = users.${username} or (throw "User ${username} metadata not found");
+                  in {
+                    isNormalUser = true;
+                    extraGroups = (u.groups or []) ++ ["networkmanager"];
+                    shell =
+                      if (u.shell or "") == "fish"
+                      then pkgs.fish
+                      else pkgs.bash;
+                  }
+                );
               }
-            ) hmUsers
-          ) manifest.hosts
-        );
+            ];
+          }
+      )
+      hosts;
+
+    devShells.${system}.default = devenv.lib.mkShell {
+      inherit inputs pkgs;
+      modules = [./devenv.nix];
     };
+  };
 }
