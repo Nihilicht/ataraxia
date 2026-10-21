@@ -1,7 +1,7 @@
 {inputs, ...}: final: prev:
 (import ../pkgs {
   pkgs = final;
-  inputs = inputs;
+  inherit inputs;
 })
 // {
   fjordlauncher =

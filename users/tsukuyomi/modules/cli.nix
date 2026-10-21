@@ -1,9 +1,4 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   home.packages = with pkgs; [
     wl-clipboard
     fastfetch
@@ -24,10 +19,12 @@
     copyparty
   ];
 
-  programs.fish.enable = true;
-  programs.starship.enable = true;
-  programs.atuin.enable = true;
-  programs.zoxide.enable = true;
+  programs = {
+    fish.enable = true;
+    starship.enable = true;
+    atuin.enable = true;
+    zoxide.enable = true;
+  };
 
   xdg.configFile = {
     "fish/conf.d/bun.fish".source = ../dotfiles/fish/conf.d/bun.fish;

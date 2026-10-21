@@ -9,11 +9,21 @@
   networking.dhcpcd.extraConfig = "nohook resolv.conf";
 
   # Location of the swap partition/file for hibernation/resume.
-  boot.resumeDevice = "/dev/disk/by-uuid/34819098-9b4a-4c8a-9274-bfea8f0df233";
+  boot = {
+    resumeDevice = "/dev/disk/by-uuid/34819098-9b4a-4c8a-9274-bfea8f0df233";
+    kernelPackages = pkgs.linuxPackages_latest;
+    kernel.sysctl."vm.swappiness" = 10;
+    supportedFilesystems = ["ntfs3"];
 
-  boot.kernelPackages = pkgs.linuxPackages_latest;
-  boot.kernel.sysctl."vm.swappiness" = 10;
-  boot.supportedFilesystems = ["ntfs3"];
+    loader = {
+      systemd-boot = {
+        enable = true;
+        # Keep only the newest generation's kernel/initrd in the 100M ESP
+        configurationLimit = 1;
+      };
+      efi.canTouchEfiVariables = true;
+    };
+  };
 
   # Shared NTFS partition for interoperability with Windows.
   fileSystems."/mnt/shared" = {
@@ -32,11 +42,6 @@
       "x-systemd.idle-timeout=60" # Unmount after 1 minute of inactivity
     ];
   };
-
-  boot.loader.systemd-boot.enable = true;
-  # Keep only the newest generation's kernel/initrd in the 100M ESP
-  boot.loader.systemd-boot.configurationLimit = 1;
-  boot.loader.efi.canTouchEfiVariables = true;
 
   systemd.services.disk-monitor = {
     description = "Lightweight storage and mount state monitor";

@@ -22,9 +22,11 @@
 
     pyproject-build-systems = {
       url = "github:pyproject-nix/build-system-pkgs";
-      inputs.pyproject-nix.follows = "pyproject-nix";
-      inputs.uv2nix.follows = "uv2nix";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs = {
+        pyproject-nix.follows = "pyproject-nix";
+        uv2nix.follows = "uv2nix";
+        nixpkgs.follows = "nixpkgs";
+      };
     };
 
     aagl = {
@@ -65,7 +67,6 @@
   };
 
   outputs = {
-    self,
     nixpkgs,
     devenv,
     home-manager,
@@ -73,17 +74,17 @@
   } @ inputs: let
     system = "x86_64-linux";
     pkgs = nixpkgs.legacyPackages.${system};
-    lib = nixpkgs.lib;
+    inherit (nixpkgs) lib;
 
     manifest = builtins.fromTOML (builtins.readFile ./manifest.toml);
 
     hosts = lib.listToAttrs (map (h: {
-        name = h.name;
+        inherit (h) name;
         value = h;
       })
       manifest.hosts);
     users = lib.listToAttrs (map (u: {
-        name = u.name;
+        inherit (u) name;
         value = u;
       })
       manifest.users);

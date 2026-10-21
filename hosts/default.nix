@@ -1,16 +1,11 @@
 {
   lib,
   hostCfg,
-  pkgs,
   ...
 }: {
   # Default timezone and locale (downstream can override)
   time.timeZone = lib.mkDefault "UTC";
   i18n.defaultLocale = lib.mkDefault "en_US.UTF-8";
-
-  # Default network configurations
-  networking.useDHCP = lib.mkDefault true;
-  networking.hostName = lib.mkDefault hostCfg.name;
 
   # Default system state version
   system.stateVersion = lib.mkDefault "26.05";
@@ -27,6 +22,8 @@
 
   # Network configurations
   networking = {
+    useDHCP = lib.mkDefault true;
+    hostName = lib.mkDefault hostCfg.name;
     networkmanager = {
       enable = true;
       dns = "none";
@@ -79,21 +76,23 @@
 
   # Default VM variant resource allocation (downstream can override)
   virtualisation.vmVariant = {
-    virtualisation.cores = lib.mkDefault 8;
-    virtualisation.memorySize = lib.mkDefault 16384;
-    virtualisation.sharedDirectories = {
-      ataraxia = {
-        source = "/etc/ataraxia";
-        target = "/etc/ataraxia";
+    virtualisation = {
+      cores = lib.mkDefault 8;
+      memorySize = lib.mkDefault 16384;
+      sharedDirectories = {
+        ataraxia = {
+          source = "/etc/ataraxia";
+          target = "/etc/ataraxia";
+        };
       };
+      forwardPorts = [
+        {
+          from = "host";
+          host.port = 2222;
+          guest.port = 22;
+        }
+      ];
     };
-    virtualisation.forwardPorts = [
-      {
-        from = "host";
-        host.port = 2222;
-        guest.port = 22;
-      }
-    ];
 
     # Enable SSH and allow empty password login inside the VM
     services.openssh = {
@@ -109,7 +108,7 @@
     security.pam.services.login.allowNullPassword = true;
 
     users.users =
-      lib.genAttrs (hostCfg.users or ["tsukuyomi"]) (name: {
+      lib.genAttrs (hostCfg.users or ["tsukuyomi"]) (_: {
         initialHashedPassword = lib.mkForce "";
       })
       // {
@@ -117,13 +116,17 @@
       };
 
     # VM specific boot and device overrides
-    boot.resumeDevice = lib.mkForce "";
-    boot.consoleLogLevel = lib.mkForce 3;
-    boot.initrd.systemd.enable = lib.mkForce true;
-    boot.initrd.kernelModules = [
-      "9p"
-      "9pnet_virtio"
-    ];
+    boot = {
+      resumeDevice = lib.mkForce "";
+      consoleLogLevel = lib.mkForce 3;
+      initrd = {
+        systemd.enable = lib.mkForce true;
+        kernelModules = [
+          "9p"
+          "9pnet_virtio"
+        ];
+      };
+    };
     fileSystems."/boot" = lib.mkForce {
       device = "tmpfs";
       fsType = "tmpfs";

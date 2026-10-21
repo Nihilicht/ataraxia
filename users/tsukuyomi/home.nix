@@ -1,10 +1,4 @@
-{
-  config,
-  pkgs,
-  lib,
-  userData,
-  ...
-}: {
+{...}: {
   imports = [
     ./modules
   ];
