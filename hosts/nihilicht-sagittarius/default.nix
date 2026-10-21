@@ -12,6 +12,7 @@
   boot.resumeDevice = "/dev/disk/by-uuid/34819098-9b4a-4c8a-9274-bfea8f0df233";
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernel.sysctl."vm.swappiness" = 10;
   boot.supportedFilesystems = ["ntfs3"];
 
   # Shared NTFS partition for interoperability with Windows.
@@ -33,6 +34,8 @@
   };
 
   boot.loader.systemd-boot.enable = true;
+  # Keep only the newest generation's kernel/initrd in the 100M ESP
+  boot.loader.systemd-boot.configurationLimit = 1;
   boot.loader.efi.canTouchEfiVariables = true;
 
   systemd.services.disk-monitor = {

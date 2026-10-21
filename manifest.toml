@@ -9,8 +9,10 @@ groups = ["wheel"]
 desktop = "hyprland.desktop"
 shell = "fish"
 inputs = ["tsukuyomi-env", "aagl"]
+trusted = true
 
 [[users]]
 name = "amaterasu"
 groups = ["wheel"]
 shell = "fish"
+trusted = true

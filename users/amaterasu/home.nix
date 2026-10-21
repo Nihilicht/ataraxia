@@ -7,13 +7,9 @@
   ...
 }: {
   imports = [
-    inputs.caelestia-shell.homeManagerModules.default
   ];
 
-  programs.caelestia = {
-    enable = true;
-    cli.enable = true;
-  };
+  programs.kitty.enable = true;
 
   home.stateVersion = "26.05";
 }

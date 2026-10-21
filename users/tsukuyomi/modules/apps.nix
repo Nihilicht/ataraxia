@@ -6,6 +6,7 @@
   ...
 }: {
   home.packages = with pkgs; [
+    google-chrome # Required for Antigravity IDE Browser Agent
     helium # Custom Chromium derivative via overlay
     vesktop # Discord client
     fjordlauncher # Minecraft
@@ -15,7 +16,7 @@
     kdePackages.dolphin # File manager
     (ataraxia.lib.wrapPackage {
       inherit pkgs;
-      pkg = antigravity-ide.override {useFHS = false;};
+      pkg = antigravity-ide.override {useFHS = true;};
       deps = [
         lua-language-server
         nixd

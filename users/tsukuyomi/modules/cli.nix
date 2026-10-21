@@ -17,9 +17,11 @@
     typst
 
     # AI / CLI Agents
-    gemini-cli
     codex
-    deepagents-code
+
+    bun
+
+    copyparty
   ];
 
   programs.fish.enable = true;

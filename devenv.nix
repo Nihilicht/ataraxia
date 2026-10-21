@@ -25,22 +25,22 @@
     "nixos:switch".exec = ''
       host="''${1:-$(hostname)}"
       echo "Rebuilding and switching NixOS configuration for host: $host..."
-      sudo nixos-rebuild switch --flake "$DEVENV_ROOT#$host"
+      sudo nixos-rebuild switch --flake "${config.devenv.root}#$host"
     '';
     "nixos:boot".exec = ''
       host="''${1:-$(hostname)}"
       echo "Rebuilding and setting boot menu configuration for host: $host..."
-      sudo nixos-rebuild boot --flake "$DEVENV_ROOT#$host"
+      sudo nixos-rebuild boot --flake "${config.devenv.root}#$host"
     '';
     "nixos:test".exec = ''
       host="''${1:-$(hostname)}"
       echo "Rebuilding and testing NixOS configuration for host: $host..."
-      sudo nixos-rebuild test --flake "$DEVENV_ROOT#$host"
+      sudo nixos-rebuild test --flake "${config.devenv.root}#$host"
     '';
     "nixos:build".exec = ''
       host="''${1:-$(hostname)}"
       echo "Building NixOS configuration for host: $host..."
-      nix build "$DEVENV_ROOT#nixosConfigurations.$host.config.system.build.toplevel"
+      nix build "${config.devenv.root}#nixosConfigurations.$host.config.system.build.toplevel"
     '';
     "nixos:gc".exec = ''
       echo "Deleting system generations older than 5 days..."
@@ -50,11 +50,11 @@
     '';
     "flake:update".exec = ''
       echo "Updating flake inputs..."
-      cd "$DEVENV_ROOT" && nix flake update
+      cd "${config.devenv.root}" && nix flake update
     '';
     "repo:format".exec = ''
       echo "Formatting all Nix files in the repository..."
-      alejandra "$DEVENV_ROOT"
+      alejandra "${config.devenv.root}"
     '';
   };
 }

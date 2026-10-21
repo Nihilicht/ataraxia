@@ -22,6 +22,7 @@
       "cloudflare-warp"
       "obsidian"
       "lmstudio"
+      "google-chrome"
     ];
 
   # Network configurations

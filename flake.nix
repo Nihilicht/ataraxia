@@ -4,6 +4,11 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    copyparty = {
+      url = "github:9001/copyparty";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     pyproject-nix = {
       url = "github:pyproject-nix/pyproject.nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -55,11 +60,6 @@
 
     home-manager = {
       url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    caelestia-shell = {
-      url = "github:caelestia-dots/shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -176,6 +176,14 @@
                       else pkgs.bash;
                   }
                 );
+
+                # Grant trusted-user privileges to users with trusted = true
+                nix.settings.trusted-users = builtins.filter (
+                  username: let
+                    u = users.${username} or {};
+                  in
+                    u.trusted or false
+                ) (hostCfg.users or []);
               }
             ];
           }
